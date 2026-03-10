@@ -129,6 +129,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderNavbar('home');
   renderFooter();
 
+
+  // Load categories
+  const { data: cats } = await sb().from('categories').select('*').eq('active', true).order('order');
+  const catGrid = document.getElementById('catGrid');
+  if (cats?.length) {
+    catGrid.innerHTML = cats.map(c => `
+      <a href="/pages/products.html?cat=${c.slug}" class="cat-card">
+        ${c.emoji?.startsWith('http')
+          ? `<img src="${c.emoji}" style="width:48px;height:48px;border-radius:10px;object-fit:cover;">`
+          : `<span style="font-size:36px;">${c.emoji || '🎁'}</span>`}
+        <span>${c.name}</span>
+      </a>`).join('');
+  }
+
   // Load products
   const { data: products, error } = await sb()
     .from('products')
