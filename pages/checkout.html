@@ -161,7 +161,7 @@ async function placeOrder() {
   }
 
   saveCart([]);
-  showToast('Order placed successfully! 🎉');
+  showToast('Order pending!!');
   const items = orderData.items.map(i => `• ${i.name} x${i.qty} = ₹${(i.price*i.qty).toLocaleString()}`).join('\n');
 const msg = `🎁 *New Order from Giftess!*\n\n` +
   `📋 Order ID: ${orderData.order_id}\n` +
