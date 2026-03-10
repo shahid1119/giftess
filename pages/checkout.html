@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Checkout – Giftess</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+  <style>
+    .checkout-layout { display:grid; grid-template-columns:1fr 360px; gap:28px; padding:40px 5%; max-width:1100px; margin:0 auto; }
+    .checkout-section { background:white; border-radius:20px; padding:28px; box-shadow:0 2px 16px rgba(155,114,160,.08); margin-bottom:20px; }
+    .checkout-section h3 { font-family:'Playfair Display',serif; font-size:1.2rem; color:#2D1B3D; margin-bottom:20px; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:0 16px; }
+    .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0 16px; }
+    .pay-option { display:flex; align-items:center; gap:14px; padding:14px 18px; border:1.5px solid #E8D5E8; border-radius:14px; cursor:pointer; transition:border-color .2s; margin-bottom:10px; }
+    .pay-option input { display:none; }
+    .pay-option.selected { border-color:#9B72A0; background:#F5EEF8; }
+    .pay-label { font-size:14px; font-weight:600; color:#2D1B3D; }
+    .pay-desc  { font-size:12px; color:#9B8AAD; }
+    .order-summary { background:white; border-radius:20px; padding:24px; box-shadow:0 2px 16px rgba(155,114,160,.1); position:sticky; top:88px; }
+    .order-summary h3 { font-family:'Playfair Display',serif; font-size:1.2rem; color:#2D1B3D; margin-bottom:18px; }
+    .os-item { display:flex; justify-content:space-between; font-size:13px; color:#5C4A6E; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid #F5EEF8; }
+    .os-row  { display:flex; justify-content:space-between; font-size:14px; color:#5C4A6E; margin-top:8px; }
+    .os-total { font-size:17px; font-weight:700; color:#2D1B3D; border-top:1px solid #F5EEF8; padding-top:12px; margin-top:8px; }
+    @media(max-width:768px){ .checkout-layout{grid-template-columns:1fr;} .grid2,.grid3{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+<div id="navbar"></div>
+
+<div class="page-hero"><h1>Checkout</h1></div>
+
+<div class="checkout-layout">
+  <div>
+    <div class="checkout-section">
+      <h3>Delivery Address</h3>
+      <div class="grid2">
+        <div class="form-group"><label>Full Name *</label><input id="fname" placeholder="Jane Doe" required></div>
+        <div class="form-group"><label>Phone *</label><input id="fphone" placeholder="+91 9876543210" required></div>
+      </div>
+      <div class="form-group"><label>Email *</label><input id="femail" type="email" placeholder="you@email.com" required></div>
+      <div class="form-group"><label>Address *</label><input id="faddress" placeholder="House/Flat No, Street" required></div>
+      <div class="grid3">
+        <div class="form-group"><label>City *</label><input id="fcity" required></div>
+        <div class="form-group"><label>State *</label><input id="fstate" required></div>
+        <div class="form-group"><label>Pincode *</label><input id="fpincode" maxlength="6" required></div>
+      </div>
+      <div class="form-group"><label>Landmark (Optional)</label><input id="flandmark" placeholder="Near temple…"></div>
+    </div>
+
+    <div class="checkout-section">
+      <h3>Payment Method</h3>
+      <div class="pay-option selected" id="pay_cod" onclick="selectPay('cod')">
+        <input type="radio" name="pay" value="cod" checked>
+        <div><div class="pay-label">💵 Cash on Delivery</div><div class="pay-desc">Pay when you receive</div></div>
+      </div>
+      <div class="pay-option" id="pay_upi" onclick="selectPay('upi')">
+        <input type="radio" name="pay" value="upi">
+        <div><div class="pay-label">📱 UPI / PhonePe / GPay</div><div class="pay-desc">Instant payment</div></div>
+      </div>
+      <div class="pay-option" id="pay_online" onclick="selectPay('online')">
+        <input type="radio" name="pay" value="online">
+        <div><div class="pay-label">💳 Card / Net Banking</div><div class="pay-desc">Secure online payment</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="order-summary">
+      <h3>Order Summary</h3>
+      <div id="osSummary"></div>
+      <div class="os-row"><span>Subtotal</span><span id="osSubtotal"></span></div>
+      <div class="os-row"><span>Shipping</span><span id="osShipping"></span></div>
+      <div class="os-row os-total"><span>Total</span><span id="osTotal"></span></div>
+      <button class="btn-primary" style="width:100%;justify-content:center;margin-top:18px;" onclick="placeOrder()" id="placeBtn">
+        🎁 Place Order
+      </button>
+    </div>
+  </div>
+</div>
+
+<footer id="footer"></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase-config.js"></script>
+<script src="/js/footer.js"></script>
+<script>
+let selectedPay = 'cod';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  renderNavbar();
+  renderFooter();
+
+  const user = await getUser();
+  if (!user) { showToast('Please login to checkout','error'); setTimeout(()=>location.href='/pages/login.html',1500); return; }
+  const profile = await getProfile(user.id);
+  if (profile?.name) document.getElementById('fname').value = profile.name;
+  if (profile?.phone) document.getElementById('fphone').value = profile.phone;
+  document.getElementById('femail').value = user.email;
+
+  const cart = getCart();
+  if (!cart.length) { location.href='/pages/cart.html'; return; }
+
+  const total    = cartTotal();
+  const shipping = total >= 999 ? 0 : 99;
+  document.getElementById('osSummary').innerHTML = cart.map(i => `<div class="os-item"><span>${i.name} × ${i.qty}</span><span>₹${(i.price*i.qty).toLocaleString()}</span></div>`).join('');
+  document.getElementById('osSubtotal').textContent = '₹' + total.toLocaleString();
+  document.getElementById('osShipping').textContent  = shipping === 0 ? '🎉 FREE' : '₹99';
+  document.getElementById('osTotal').textContent     = '₹' + (total+shipping).toLocaleString();
+});
+
+function selectPay(method) {
+  selectedPay = method;
+  ['cod','upi','online'].forEach(m => {
+    document.getElementById('pay_'+m).classList.toggle('selected', m === method);
+  });
+}
+
+function genOrderId() { return 'GF-' + Date.now().toString(36).toUpperCase(); }
+
+async function placeOrder() {
+  const fields = ['fname','fphone','femail','faddress','fcity','fstate','fpincode'];
+  for (const f of fields) {
+    if (!document.getElementById(f).value.trim()) { showToast('Please fill all required fields','error'); return; }
+  }
+  const user = await getUser();
+  if (!user) { location.href='/pages/login.html'; return; }
+
+  const btn = document.getElementById('placeBtn');
+  btn.textContent = 'Placing Order…'; btn.disabled = true;
+
+  const cart     = getCart();
+  const total    = cartTotal();
+  const shipping = total >= 999 ? 0 : 99;
+
+  const orderData = {
+    order_id: genOrderId(),
+    user_id: user.id,
+    user_email: user.email,
+    user_name: document.getElementById('fname').value,
+    items: cart,
+    subtotal: total,
+    shipping,
+    total: total + shipping,
+    address: {
+      name: document.getElementById('fname').value,
+      phone: document.getElementById('fphone').value,
+      address: document.getElementById('faddress').value,
+      city: document.getElementById('fcity').value,
+      state: document.getElementById('fstate').value,
+      pincode: document.getElementById('fpincode').value,
+      landmark: document.getElementById('flandmark').value,
+    },
+    payment_method: selectedPay,
+    status: 'Pending',
+    courier_name: '', tracking_number: '', tracking_link: ''
+  };
+
+  const { data, error } = await sb().from('orders').insert(orderData).select().single();
+  if (error) {
+    showToast('Failed to place order. Try again.','error');
+    btn.textContent = '🎁 Place Order'; btn.disabled = false;
+    return;
+  }
+
+  saveCart([]);
+  showToast('Order placed successfully! 🎉');
+  setTimeout(() => location.href = `/pages/order-detail.html?id=${data.id}`, 1000);
+}
+</script>
+</body>
+</html>

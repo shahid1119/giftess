@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Create Hamper – Giftess</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+  <style>
+    .hamper-layout { display:grid; grid-template-columns:1fr 320px; gap:28px; padding:40px 5%; max-width:1200px; margin:0 auto; }
+    .discount-banner { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:32px; padding:0 5%; }
+    .disc-card { background:white; border:2px solid #E8D5E8; border-radius:14px; padding:14px 20px; text-align:center; transition:all .3s; min-width:110px; }
+    .disc-card.active { border-color:#9B72A0; background:#F5EEF8; transform:scale(1.05); }
+    .dc-count { display:block; font-size:11px; color:#9B8AAD; font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
+    .dc-val   { display:block; font-size:16px; font-weight:700; color:#9B72A0; }
+    .hp-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+    .hp-toolbar h3 { font-family:'Playfair Display',serif; font-size:1.3rem; color:#2D1B3D; }
+    .sel-badge { background:#9B72A0; color:white; padding:6px 14px; border-radius:50px; font-size:12px; font-weight:600; }
+    .hp-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:14px; }
+    .hp-card  { background:white; border-radius:14px; overflow:hidden; border:2px solid #E8D5E8; cursor:pointer; transition:all .2s; }
+    .hp-card:hover { border-color:#C8A2C8; transform:translateY(-2px); }
+    .hp-card.selected { border-color:#9B72A0; background:#F5EEF8; }
+    .hp-img   { height:120px; background:#F5EEF8; display:flex; align-items:center; justify-content:center; font-size:48px; overflow:hidden; position:relative; }
+    .hp-img img { width:100%; height:100%; object-fit:cover; }
+    .hp-check { position:absolute; top:6px; right:6px; width:26px; height:26px; background:#9B72A0; border-radius:50%; color:white; font-size:13px; display:flex; align-items:center; justify-content:center; font-weight:700; }
+    .hp-name  { padding:8px 10px 4px; font-size:12px; font-weight:600; color:#2D1B3D; }
+    .hp-price { padding:0 10px 10px; font-size:13px; font-weight:700; color:#9B72A0; }
+    .summary-box { background:white; border-radius:20px; padding:24px; box-shadow:0 2px 16px rgba(155,114,160,.1); position:sticky; top:88px; }
+    .summary-box h3 { font-family:'Playfair Display',serif; font-size:1.2rem; color:#2D1B3D; margin-bottom:18px; }
+    .sel-list { max-height:260px; overflow-y:auto; margin-bottom:14px; }
+    .sel-item { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #F5EEF8; font-size:13px; color:#5C4A6E; gap:8px; }
+    .sel-rm   { background:none; border:none; color:#9B8AAD; font-size:13px; cursor:pointer; }
+    .sel-rm:hover { color:#E05588; }
+    .sum-row  { display:flex; justify-content:space-between; font-size:14px; color:#5C4A6E; margin-top:8px; }
+    .sum-disc { color:#27AE60; font-weight:600; }
+    .sum-total { font-size:17px; font-weight:700; color:#2D1B3D; border-top:1px solid #F5EEF8; padding-top:10px; margin-top:8px; }
+    .min-note  { font-size:12px; color:#9B8AAD; text-align:center; margin-top:10px; }
+    @media(max-width:768px){ .hamper-layout{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+<div id="navbar"></div>
+
+<div class="page-hero">
+  <h1>Create Your Own Hamper ✨</h1>
+  <p>Select minimum 5 products and enjoy exclusive bundle discounts!</p>
+</div>
+
+<div class="discount-banner">
+  <div class="disc-card" id="dc5"><span class="dc-count">5 items</span><span class="dc-val">₹100 OFF</span></div>
+  <div class="disc-card" id="dc6"><span class="dc-count">6 items</span><span class="dc-val">₹140 OFF</span></div>
+  <div class="disc-card" id="dc7"><span class="dc-count">7 items</span><span class="dc-val">10% OFF</span></div>
+  <div class="disc-card" id="dc8"><span class="dc-count">8+ items</span><span class="dc-val">15% OFF</span></div>
+</div>
+
+<div class="hamper-layout">
+  <div>
+    <div class="hp-toolbar">
+      <h3>Choose Products</h3>
+      <span class="sel-badge" id="selBadge">0 selected</span>
+    </div>
+    <div class="hp-grid" id="hpGrid"><div class="spinner"></div></div>
+  </div>
+
+  <div class="summary-box">
+    <h3>Hamper Summary</h3>
+    <div class="sel-list" id="selList"><p style="font-size:13px;color:#9B8AAD;">Select products to build your hamper</p></div>
+    <div id="sumSection" style="display:none;">
+      <div class="sum-row"><span>Subtotal</span><span id="sumSub">₹0</span></div>
+      <div class="sum-row sum-disc" id="discRow" style="display:none;"><span>🎉 Bundle Discount</span><span id="discAmt"></span></div>
+      <div class="sum-row sum-total"><span>Total</span><span id="sumTot">₹0</span></div>
+    </div>
+    <p class="min-note" id="minNote">Select at least 5 products to proceed</p>
+    <button class="btn-primary" style="width:100%;justify-content:center;margin-top:16px;" id="addBtn" onclick="addHamperToCart()" disabled>🛒 Add Hamper to Cart</button>
+  </div>
+</div>
+
+<footer id="footer"></footer>
+<a href="https://wa.me/916002698296" class="wa-float" target="_blank">💬</a>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase-config.js"></script>
+<script src="/js/footer.js"></script>
+<script>
+let allProducts = [];
+let selected    = [];
+
+const DISC_RULES = [
+  { min:5,max:5,type:'flat',val:100 },
+  { min:6,max:6,type:'flat',val:140 },
+  { min:7,max:7,type:'percent',val:10 },
+  { min:8,max:99,type:'percent',val:15 },
+];
+
+function getDiscount(count, subtotal) {
+  const r = DISC_RULES.find(r => count >= r.min && count <= r.max);
+  if (!r) return 0;
+  return r.type === 'flat' ? r.val : Math.round(subtotal * r.val / 100);
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  renderNavbar('hamper');
+  renderFooter();
+  const { data } = await sb().from('products').select('*').eq('active', true).order('name');
+  allProducts = data || [];
+  allProducts.forEach(p => { window._products[p.id] = p; });
+  renderGrid();
+});
+
+function renderGrid() {
+  const grid = document.getElementById('hpGrid');
+  if (!allProducts.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🎁</div><h3>No products available</h3></div>`;
+    return;
+  }
+  grid.innerHTML = allProducts.map(p => {
+    const isSel = selected.find(s => s.id === p.id);
+    return `
+      <div class="hp-card ${isSel?'selected':''}" id="hpc_${p.id}" onclick="toggleProduct('${p.id}')">
+        <div class="hp-img">
+          ${p.images?.[0] ? `<img src="${p.images[0]}" alt="${p.name}">` : '🎁'}
+          ${isSel ? `<div class="hp-check">✓</div>` : ''}
+        </div>
+        <div class="hp-name">${p.name}</div>
+        <div class="hp-price">₹${Number(p.price).toLocaleString()}</div>
+      </div>`;
+  }).join('');
+}
+
+function toggleProduct(id) {
+  const p = allProducts.find(p => p.id === id);
+  if (!p) return;
+  const idx = selected.findIndex(s => s.id === id);
+  if (idx > -1) selected.splice(idx, 1);
+  else selected.push(p);
+  renderGrid();
+  updateSummary();
+}
+
+function updateSummary() {
+  const count    = selected.length;
+  const subtotal = selected.reduce((s,p) => s + p.price, 0);
+  const discount = getDiscount(count, subtotal);
+  const total    = subtotal - discount;
+
+  document.getElementById('selBadge').textContent = `${count} selected${count < 5 ? ` (need ${5-count} more)` : ' ✓'}`;
+
+  // Highlight discount cards
+  ['dc5','dc6','dc7','dc8'].forEach(id => document.getElementById(id).classList.remove('active'));
+  if (count === 5) document.getElementById('dc5').classList.add('active');
+  else if (count === 6) document.getElementById('dc6').classList.add('active');
+  else if (count === 7) document.getElementById('dc7').classList.add('active');
+  else if (count >= 8)  document.getElementById('dc8').classList.add('active');
+
+  const selList = document.getElementById('selList');
+  if (!count) {
+    selList.innerHTML = `<p style="font-size:13px;color:#9B8AAD;">Select products to build your hamper</p>`;
+    document.getElementById('sumSection').style.display = 'none';
+  } else {
+    selList.innerHTML = selected.map(p => `
+      <div class="sel-item">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name}</span>
+        <span style="font-weight:600;color:#9B72A0;white-space:nowrap;">₹${Number(p.price).toLocaleString()}</span>
+        <button class="sel-rm" onclick="toggleProduct('${p.id}')">✕</button>
+      </div>`).join('');
+    document.getElementById('sumSection').style.display = 'block';
+    document.getElementById('sumSub').textContent = '₹' + subtotal.toLocaleString();
+    if (discount > 0) {
+      document.getElementById('discRow').style.display = 'flex';
+      document.getElementById('discAmt').textContent = '−₹' + discount.toLocaleString();
+    } else {
+      document.getElementById('discRow').style.display = 'none';
+    }
+    document.getElementById('sumTot').textContent = '₹' + total.toLocaleString();
+  }
+
+  const btn = document.getElementById('addBtn');
+  btn.disabled = count < 5;
+  document.getElementById('minNote').textContent = count < 5
+    ? `⚠️ Select ${5-count} more product(s) to proceed`
+    : '✅ Ready to checkout!';
+}
+
+function addHamperToCart() {
+  if (selected.length < 5) return;
+  selected.forEach(p => addToCart(p));
+  showToast(`Hamper added to cart! 🎉`);
+  setTimeout(() => location.href = '/pages/cart.html', 1000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Product – Giftess</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+  <style>
+    .detail-wrap { max-width:1100px; margin:0 auto; padding:40px 5%; }
+    .breadcrumb { font-size:13px; color:#9B8AAD; margin-bottom:24px; }
+    .breadcrumb a { color:#9B72A0; }
+    .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; margin-bottom:60px; }
+    .main-img { border-radius:20px; overflow:hidden; background:#F5EEF8; aspect-ratio:1; display:flex; align-items:center; justify-content:center; margin-bottom:12px; cursor:pointer; }
+    .main-img img { width:100%; height:100%; object-fit:cover; transition:transform .4s; }
+    .main-img:hover img { transform:scale(1.04); }
+    .img-placeholder { font-size:80px; }
+    .thumbs { display:flex; gap:10px; flex-wrap:wrap; }
+    .thumb { width:72px; height:72px; border-radius:10px; overflow:hidden; background:#F5EEF8; border:2px solid transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:border-color .2s; }
+    .thumb img { width:100%; height:100%; object-fit:cover; }
+    .thumb.active { border-color:#9B72A0; }
+    .sku-tag { font-size:12px; color:#9B8AAD; letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; }
+    .detail-name { font-family:'Playfair Display',serif; font-size:clamp(1.6rem,2.5vw,2.2rem); color:#2D1B3D; margin-bottom:8px; }
+    .detail-stars { color:#F5A623; font-size:14px; margin-bottom:14px; }
+    .detail-price-row { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+    .detail-price { font-size:28px; font-weight:700; color:#9B72A0; }
+    .detail-orig  { font-size:16px; color:#9B8AAD; text-decoration:line-through; }
+    .detail-desc  { font-size:14px; color:#5C4A6E; line-height:1.7; margin-bottom:24px; }
+    .extras-box   { background:#F5EEF8; border-radius:16px; padding:18px; margin-bottom:22px; }
+    .extras-box h4 { font-size:14px; font-weight:700; color:#2D1B3D; margin-bottom:14px; }
+    .extras-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+    .extra-item   { display:flex; align-items:center; gap:10px; padding:10px 14px; background:white; border:1.5px solid #E8D5E8; border-radius:12px; cursor:pointer; transition:all .2s; user-select:none; }
+    .extra-item input { display:none; }
+    .extra-item.checked { border-color:#9B72A0; background:#F5EEF8; }
+    .extra-item span { font-size:22px; }
+    .extra-name  { font-size:12px; font-weight:600; color:#2D1B3D; }
+    .extra-price { font-size:11px; color:#9B72A0; font-weight:600; }
+    .qty-row   { display:flex; align-items:center; gap:14px; margin-bottom:20px; flex-wrap:wrap; }
+    .qty-ctrl  { display:flex; align-items:center; border:1.5px solid #E8D5E8; border-radius:50px; overflow:hidden; }
+    .qty-ctrl button { width:38px; height:38px; background:none; border:none; font-size:18px; color:#9B72A0; }
+    .qty-ctrl button:hover { background:#F5EEF8; }
+    .qty-ctrl span { width:40px; text-align:center; font-weight:700; font-size:15px; }
+    .wish-btn  { width:44px; height:44px; background:#F5EEF8; border:none; border-radius:50%; font-size:20px; display:flex; align-items:center; justify-content:center; transition:background .2s; flex-shrink:0; }
+    .wish-btn:hover { background:#E8D5E8; }
+    .meta-row  { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:#5C4A6E; font-weight:500; margin-top:16px; }
+    .review-section { border-top:1px solid #F5EEF8; padding-top:48px; }
+    .review-section h2 { font-family:'Playfair Display',serif; font-size:1.8rem; color:#2D1B3D; margin-bottom:24px; }
+    .reviews-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:20px; margin-bottom:40px; }
+    .review-card  { background:#F5EEF8; border-radius:16px; padding:20px; }
+    .review-stars { color:#F5A623; font-size:16px; margin-bottom:8px; }
+    .review-card p { font-size:13px; color:#5C4A6E; line-height:1.6; margin-bottom:10px; }
+    .review-author { font-size:12px; color:#9B8AAD; font-style:italic; }
+    .review-form   { background:white; border:1.5px solid #E8D5E8; border-radius:16px; padding:28px; max-width:500px; }
+    .review-form h3 { font-family:'Playfair Display',serif; font-size:1.3rem; color:#2D1B3D; margin-bottom:20px; }
+    .star-rating   { display:flex; gap:4px; margin-bottom:16px; }
+    .star-btn      { background:none; border:none; font-size:28px; color:#E8D5E8; transition:color .15s; cursor:pointer; }
+    .star-btn.on   { color:#F5A623; }
+    @media(max-width:768px){ .detail-grid{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+<div id="navbar"></div>
+
+<div class="detail-wrap">
+  <div class="breadcrumb">
+    <a href="/index.html">Home</a> › <a href="/pages/products.html">Products</a> › <span id="breadName">Loading…</span>
+  </div>
+
+  <div id="loadingState"><div class="spinner"></div></div>
+
+  <div id="detailContent" style="display:none;">
+    <div class="detail-grid">
+      <div class="gallery">
+        <div class="main-img" id="mainImg"><div class="img-placeholder">🎁</div></div>
+        <div class="thumbs" id="thumbs"></div>
+      </div>
+      <div class="info-col">
+        <div class="sku-tag" id="skuTag"></div>
+        <h1 class="detail-name" id="pName"></h1>
+        <div class="detail-stars">★★★★★ <span id="reviewCount" style="color:#9B8AAD;font-size:13px;"></span></div>
+        <div class="detail-price-row">
+          <span class="detail-price" id="pPrice"></span>
+          <span class="detail-orig" id="pOrig"></span>
+        </div>
+        <p class="detail-desc" id="pDesc"></p>
+
+        <div class="extras-box" id="extrasBox" style="display:none;">
+          <h4>🎀 Make Your Gift Extra Special</h4>
+          <div class="extras-grid" id="extrasGrid"></div>
+        </div>
+
+        <div class="qty-row">
+          <div class="qty-ctrl">
+            <button onclick="changeQty(-1)">−</button>
+            <span id="qtyDisplay">1</span>
+            <button onclick="changeQty(1)">+</button>
+          </div>
+          <button class="btn-primary" onclick="doAddToCart()">🛒 Add to Cart</button>
+          <button class="wish-btn" id="wishBtn" onclick="doWish()">🤍</button>
+        </div>
+        <div class="meta-row">
+          <span>📦 Free Shipping above ₹999</span>
+          <span>✅ Premium Quality</span>
+          <span>🔄 Easy Returns</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reviews -->
+    <div class="review-section">
+      <h2>Customer Reviews</h2>
+      <div class="reviews-grid" id="reviewsGrid"></div>
+      <div class="review-form">
+        <h3>Write a Review</h3>
+        <div class="star-rating" id="starRating">
+          <button class="star-btn on" data-v="1">★</button>
+          <button class="star-btn on" data-v="2">★</button>
+          <button class="star-btn on" data-v="3">★</button>
+          <button class="star-btn on" data-v="4">★</button>
+          <button class="star-btn on" data-v="5">★</button>
+        </div>
+        <div class="form-group">
+          <textarea id="reviewText" placeholder="Share your experience…" rows="4"></textarea>
+        </div>
+        <button class="btn-primary" onclick="submitReview()">Submit Review</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer id="footer"></footer>
+<a href="https://wa.me/916002698296" class="wa-float" target="_blank">💬</a>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase-config.js"></script>
+<script src="/js/footer.js"></script>
+<script>
+let product = null;
+let qty = 1;
+let selectedRating = 5;
+const productId = new URLSearchParams(location.search).get('id');
+
+document.addEventListener('DOMContentLoaded', async () => {
+  renderNavbar('products');
+  renderFooter();
+  if (!productId) { location.href='/pages/products.html'; return; }
+  await loadProduct();
+  await loadExtras();
+  await loadReviews();
+});
+
+async function loadProduct() {
+  const { data } = await sb().from('products').select('*').eq('id', productId).single();
+  if (!data) { location.href='/pages/products.html'; return; }
+  product = data;
+  window._products[data.id] = data;
+
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('detailContent').style.display = 'block';
+  document.getElementById('breadName').textContent = data.name;
+  document.getElementById('skuTag').textContent = 'SKU: ' + data.sku;
+  document.getElementById('pName').textContent = data.name;
+  document.getElementById('pPrice').textContent = '₹' + Number(data.price).toLocaleString();
+  document.getElementById('pDesc').textContent = data.description || '';
+  if (data.original_price) document.getElementById('pOrig').textContent = '₹' + Number(data.original_price).toLocaleString();
+
+  const imgs = data.images || [];
+  const mainImg = document.getElementById('mainImg');
+  if (imgs[0]) {
+    mainImg.innerHTML = `<img src="${imgs[0]}" alt="${data.name}" id="mainImgEl">`;
+  }
+  if (imgs.length > 1) {
+    const thumbs = document.getElementById('thumbs');
+    thumbs.innerHTML = imgs.map((img,i) => `
+      <div class="thumb ${i===0?'active':''}" onclick="setImg('${img}',this)">
+        <img src="${img}" alt="">
+      </div>`).join('');
+  }
+  // Wishlist
+  if (isWished(data.id)) {
+    document.getElementById('wishBtn').textContent = '❤️';
+  }
+}
+
+function setImg(url, el) {
+  document.getElementById('mainImg').innerHTML = `<img src="${url}" alt="" id="mainImgEl">`;
+  document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+async function loadExtras() {
+  const { data } = await sb().from('extra_items').select('*').eq('active', true);
+  if (!data?.length) return;
+  document.getElementById('extrasBox').style.display = 'block';
+  document.getElementById('extrasGrid').innerHTML = data.map(item => `
+    <label class="extra-item" id="extra_${item.id}" onclick="toggleExtra(this)">
+      <input type="checkbox" value="${item.id}">
+      <span>${item.emoji || '🎁'}</span>
+      <div>
+        <div class="extra-name">${item.name}</div>
+        <div class="extra-price">+₹${item.price}</div>
+      </div>
+    </label>`).join('');
+}
+
+function toggleExtra(el) {
+  el.classList.toggle('checked');
+  el.querySelector('input').checked = el.classList.contains('checked');
+}
+
+async function loadReviews() {
+  const { data } = await sb().from('reviews').select('*').eq('product_id', productId).eq('approved', true);
+  const grid = document.getElementById('reviewsGrid');
+  document.getElementById('reviewCount').textContent = `(${data?.length || 0} reviews)`;
+  if (!data?.length) {
+    grid.innerHTML = `<p style="color:#9B8AAD;font-size:14px;grid-column:1/-1;">No reviews yet. Be the first! 🌟</p>`;
+    return;
+  }
+  grid.innerHTML = data.map(r => `
+    <div class="review-card">
+      <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+      <p>${r.comment}</p>
+      <div class="review-author">— ${r.user_name}</div>
+    </div>`).join('');
+}
+
+function changeQty(d) {
+  qty = Math.max(1, qty + d);
+  document.getElementById('qtyDisplay').textContent = qty;
+}
+
+function doAddToCart() {
+  if (!product) return;
+  addToCart(product, qty);
+}
+
+function doWish() {
+  if (!product) return;
+  const btn = document.getElementById('wishBtn');
+  const w = toggleWishlist(product);
+  btn.textContent = w ? '🤍' : '❤️';
+}
+
+// Star rating
+document.querySelectorAll('.star-btn').forEach((btn, i) => {
+  btn.addEventListener('click', () => {
+    selectedRating = i + 1;
+    document.querySelectorAll('.star-btn').forEach((b, j) => {
+      b.classList.toggle('on', j < selectedRating);
+    });
+  });
+});
+
+async function submitReview() {
+  const user = await getUser();
+  if (!user) { showToast('Please login to write a review', 'error'); return; }
+  const comment = document.getElementById('reviewText').value.trim();
+  if (!comment) { showToast('Please write a comment', 'error'); return; }
+  const profile = await getProfile(user.id);
+  const { error } = await sb().from('reviews').insert({
+    product_id: productId, user_id: user.id,
+    user_name: profile?.name || user.email,
+    rating: selectedRating, comment, approved: false
+  });
+  if (error) { showToast('Error submitting review', 'error'); return; }
+  showToast('Review submitted! Awaiting approval 🙏');
+  document.getElementById('reviewText').value = '';
+}
+</script>
+</body>
+</html>

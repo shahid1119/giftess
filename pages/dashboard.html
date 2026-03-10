@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>My Dashboard – Giftess</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+  <style>
+    .dash-header { background:linear-gradient(135deg,#F9F0FF,#EEE0F5); padding:40px 5%; display:flex; align-items:center; gap:20px; }
+    .dash-avatar { width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#9B72A0,#C8A2C8); color:white; font-size:24px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .dash-header h1 { font-family:'Playfair Display',serif; font-size:1.6rem; color:#2D1B3D; }
+    .dash-header p  { font-size:13px; color:#9B8AAD; }
+    .dash-tabs { display:flex; gap:8px; padding:24px 5% 0; max-width:900px; margin:0 auto; flex-wrap:wrap; }
+    .dash-tab  { padding:10px 22px; border-radius:50px; border:1.5px solid #E8D5E8; background:white; color:#5C4A6E; font-size:14px; font-weight:500; transition:all .2s; cursor:pointer; }
+    .dash-tab.active,.dash-tab:hover { background:#9B72A0; color:white; border-color:#9B72A0; }
+    .dash-body { max-width:900px; margin:0 auto; padding:24px 5% 60px; }
+    .order-card { background:white; border-radius:16px; padding:20px; box-shadow:0 2px 12px rgba(155,114,160,.08); margin-bottom:16px; }
+    .oc-top  { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
+    .oc-id   { font-size:14px; font-weight:700; color:#9B72A0; }
+    .oc-date { font-size:12px; color:#9B8AAD; margin-top:3px; }
+    .oc-items { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .oc-item  { display:flex; align-items:center; gap:6px; background:#F5EEF8; border-radius:8px; padding:5px 10px; font-size:12px; color:#5C4A6E; }
+    .oc-bot  { display:flex; justify-content:space-between; align-items:center; border-top:1px solid #F5EEF8; padding-top:12px; }
+    .oc-total { font-size:16px; font-weight:700; color:#9B72A0; }
+    .acct-box { background:white; border-radius:20px; padding:28px; box-shadow:0 2px 16px rgba(155,114,160,.08); }
+    .acct-box h3 { font-family:'Playfair Display',serif; font-size:1.3rem; color:#2D1B3D; margin-bottom:20px; }
+    .acct-info div { font-size:14px; color:#5C4A6E; padding:12px; background:#F5EEF8; border-radius:10px; margin-bottom:8px; }
+    .acct-info strong { color:#2D1B3D; }
+  </style>
+</head>
+<body>
+<div id="navbar"></div>
+
+<div class="dash-header">
+  <div class="dash-avatar" id="dashAvatar">👤</div>
+  <div>
+    <h1 id="dashName">My Dashboard</h1>
+    <p id="dashEmail"></p>
+  </div>
+</div>
+
+<div class="dash-tabs">
+  <button class="dash-tab active" onclick="showTab('orders',this)">📦 My Orders</button>
+  <button class="dash-tab" onclick="showTab('wishlist',this)">💜 Wishlist</button>
+  <button class="dash-tab" onclick="showTab('account',this)">⚙️ Account</button>
+</div>
+
+<div class="dash-body">
+  <!-- Orders -->
+  <div id="tab-orders">
+    <div id="ordersList"><div class="spinner"></div></div>
+  </div>
+
+  <!-- Wishlist -->
+  <div id="tab-wishlist" style="display:none;">
+    <div id="wishGrid" class="products-grid"></div>
+  </div>
+
+  <!-- Account -->
+  <div id="tab-account" style="display:none;">
+    <div class="acct-box">
+      <h3>Account Information</h3>
+      <div class="acct-info" id="acctInfo"></div>
+    </div>
+  </div>
+</div>
+
+<footer id="footer"></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase-config.js"></script>
+<script src="/js/footer.js"></script>
+<script>
+const STATUS_COLORS = { Pending:'badge-gold', Processing:'badge-blue', Shipped:'badge-purple', 'Out for Delivery':'badge-blue', Delivered:'badge-green', Cancelled:'badge-red' };
+
+document.addEventListener('DOMContentLoaded', async () => {
+  renderNavbar('dashboard');
+  renderFooter();
+
+  const user = await getUser();
+  if (!user) { location.href = '/pages/login.html?redirect=/pages/dashboard.html'; return; }
+
+  const profile = await getProfile(user.id);
+  document.getElementById('dashAvatar').textContent = (profile?.name || user.email)[0].toUpperCase();
+  document.getElementById('dashName').textContent   = profile?.name || 'My Dashboard';
+  document.getElementById('dashEmail').textContent  = user.email;
+
+  // Account info
+  document.getElementById('acctInfo').innerHTML = `
+    <div><strong>Name:</strong> ${profile?.name || '—'}</div>
+    <div><strong>Email:</strong> ${user.email}</div>
+    <div><strong>Phone:</strong> ${profile?.phone || 'Not provided'}</div>`;
+
+  // Load orders
+  const { data: orders } = await sb().from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+
+  const list = document.getElementById('ordersList');
+  if (!orders?.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><h3>No orders yet</h3><p>Start shopping!</p><a href="/pages/products.html" class="btn-primary">Shop Now</a></div>`;
+    return;
+  }
+  list.innerHTML = orders.map(o => `
+    <div class="order-card">
+      <div class="oc-top">
+        <div>
+          <div class="oc-id">#${o.order_id}</div>
+          <div class="oc-date">${new Date(o.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div>
+        </div>
+        <span class="badge ${STATUS_COLORS[o.status]||'badge-purple'}">${o.status}</span>
+      </div>
+      <div class="oc-items">
+        ${(o.items||[]).slice(0,3).map(i=>`<div class="oc-item">🎁 ${i.name} ×${i.qty}</div>`).join('')}
+        ${o.items?.length>3 ? `<div class="oc-item">+${o.items.length-3} more</div>` : ''}
+      </div>
+      <div class="oc-bot">
+        <span class="oc-total">₹${Number(o.total).toLocaleString()}</span>
+        <a href="/pages/order-detail.html?id=${o.id}" class="btn-outline">View Details</a>
+      </div>
+    </div>`).join('');
+});
+
+function showTab(name, btn) {
+  ['orders','wishlist','account'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.dash-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  if (name === 'wishlist') {
+    const items = getWishlist();
+    const grid  = document.getElementById('wishGrid');
+    if (!items.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">💜</div><h3>Wishlist is empty</h3><a href="/pages/products.html" class="btn-primary">Browse Products</a></div>`;
+      return;
+    }
+    items.forEach(i => { window._products[i.id] = i; });
+    grid.innerHTML = items.map(i => productCardHTML({ ...i, images: [i.image] })).join('');
+  }
+}
+</script>
+</body>
+</html>
