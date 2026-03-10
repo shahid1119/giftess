@@ -31,7 +31,9 @@ async function loadCats(){
   const{data}=await sb().from('categories').select('*').order('order');
   document.getElementById('catList').innerHTML=`<div class="data-table">${(data||[]).map(c=>`
     <div style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid #F5EEF8">
-      <span style="font-size:28px">${c.emoji}</span>
+      ${c.emoji?.startsWith('http')
+  ? `<img src="${c.emoji}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">`
+  : `<span style="font-size:28px">${c.emoji||'🗂'}</span>`}
       <div style="flex:1"><div style="font-weight:600;color:#2D1B3D">${c.name}</div><div style="font-size:12px;color:#9B8AAD">/${c.slug} · Order #${c.order}</div></div>
       <span class="badge ${c.active?'badge-green':'badge-red'}">${c.active?'Active':'Inactive'}</span>
       <button class="btn-outline" onclick="editCat('${c.id}','${c.name}','${c.slug}','${c.emoji}',${c.order})">✏️</button>
