@@ -1,0 +1,40 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Settings – Admin</title><link rel="stylesheet" href="/css/admin.css"/><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/></head>
+<body><div class="admin-layout"><aside class="sidebar" id="sidebar"></aside><div class="main-area"><header class="topbar"><button class="menu-btn" onclick="toggleSidebar()">☰</button><span class="top-title">Settings</span></header><div class="content">
+<div class="page-header"><h1 class="page-title">Website Settings</h1></div>
+<div style="background:white;border-radius:16px;padding:28px;max-width:600px;box-shadow:0 2px 12px rgba(155,114,160,.08)">
+  <div class="form-group"><label>Site Name</label><input id="sName" value="Giftess"/></div>
+  <div class="form-group"><label>WhatsApp Number (with country code)</label><input id="sWA" value="916002698296"/></div>
+  <div class="form-group"><label>Phone Display</label><input id="sPhone" value="+91 6002698296"/></div>
+  <div class="form-group"><label>Instagram Handle</label><input id="sIG" value="@gif_tess"/></div>
+  <div class="form-group"><label>Free Shipping Threshold (₹)</label><input type="number" id="sFreeShip" value="999"/></div>
+  <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+</div>
+<div style="background:white;border-radius:16px;padding:28px;max-width:600px;margin-top:20px;box-shadow:0 2px 12px rgba(155,114,160,.08)">
+  <h3 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:#2D1B3D;margin-bottom:16px">⚠️ Make Yourself Admin</h3>
+  <p style="font-size:13px;color:#5C4A6E;margin-bottom:14px">Enter the email of the user you want to make admin. This updates the role in their profile.</p>
+  <div class="form-group"><label>User Email</label><input id="adminEmail" placeholder="user@email.com"/></div>
+  <button class="btn-outline" onclick="makeAdmin()">Make Admin</button>
+</div>
+</div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/supabase-config.js"></script><script src="/admin/admin-common.js"></script>
+<script>
+let settingsId=null;
+document.addEventListener('DOMContentLoaded',async()=>{
+  renderSidebar('settings'); await requireAdmin();
+  const{data}=await sb().from('website_settings').select('*').limit(1).single();
+  if(data){ settingsId=data.id; document.getElementById('sName').value=data.site_name||'Giftess'; document.getElementById('sWA').value=data.whatsapp||'916002698296'; document.getElementById('sPhone').value=data.phone||'+91 6002698296'; document.getElementById('sIG').value=data.instagram||'@gif_tess'; document.getElementById('sFreeShip').value=data.free_shipping_threshold||999; }
+});
+async function saveSettings(){
+  const d={site_name:document.getElementById('sName').value,whatsapp:document.getElementById('sWA').value,phone:document.getElementById('sPhone').value,instagram:document.getElementById('sIG').value,free_shipping_threshold:Number(document.getElementById('sFreeShip').value)};
+  if(settingsId) await sb().from('website_settings').update(d).eq('id',settingsId);
+  else{ const{data}=await sb().from('website_settings').insert(d).select().single(); settingsId=data?.id; }
+  showToast('Settings saved!');
+}
+async function makeAdmin(){
+  const email=document.getElementById('adminEmail').value.trim();
+  if(!email){showToast('Enter an email','error');return;}
+  const{error}=await sb().from('profiles').update({role:'admin'}).eq('email',email);
+  if(error) showToast('Error: '+error.message,'error');
+  else showToast('Done! '+email+' is now admin ✅');
+}
+</script></body></html>

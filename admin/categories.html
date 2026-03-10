@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Categories – Admin</title><link rel="stylesheet" href="/css/admin.css"/><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/></head>
+<body><div class="admin-layout"><aside class="sidebar" id="sidebar"></aside><div class="main-area"><header class="topbar"><button class="menu-btn" onclick="toggleSidebar()">☰</button><span class="top-title">Categories</span></header><div class="content">
+<div class="page-header"><h1 class="page-title">Categories</h1><button class="btn-primary" onclick="openForm()">+ Add Category</button></div>
+<div id="formWrap" style="display:none;background:white;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 12px rgba(155,114,160,.08);">
+  <div class="form-grid2" style="grid-template-columns:1fr 1fr 1fr 1fr">
+    <div class="form-group"><label>Name *</label><input id="cName"/></div>
+    <div class="form-group"><label>Slug *</label><input id="cSlug" placeholder="birthday"/></div>
+    <div class="form-group"><label>Emoji</label><input id="cEmoji" value="🎁"/></div>
+    <div class="form-group"><label>Order</label><input type="number" id="cOrder" value="1"/></div>
+  </div>
+  <div style="display:flex;gap:10px;"><button class="btn-primary" onclick="saveCategory()">Save</button><button class="btn-secondary" onclick="closeForm()">Cancel</button></div>
+</div>
+<div id="catList"><div class="spinner"></div></div>
+</div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/supabase-config.js"></script><script src="/admin/admin-common.js"></script>
+<script>
+let editId=null;
+document.addEventListener('DOMContentLoaded',async()=>{ renderSidebar('categories'); await requireAdmin(); loadCats(); });
+async function loadCats(){
+  const{data}=await sb().from('categories').select('*').order('order');
+  document.getElementById('catList').innerHTML=`<div class="data-table">${(data||[]).map(c=>`
+    <div style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid #F5EEF8">
+      <span style="font-size:28px">${c.emoji}</span>
+      <div style="flex:1"><div style="font-weight:600;color:#2D1B3D">${c.name}</div><div style="font-size:12px;color:#9B8AAD">/${c.slug} · Order #${c.order}</div></div>
+      <span class="badge ${c.active?'badge-green':'badge-red'}">${c.active?'Active':'Inactive'}</span>
+      <button class="btn-outline" onclick="editCat('${c.id}','${c.name}','${c.slug}','${c.emoji}',${c.order})">✏️</button>
+      <button class="btn-danger" onclick="deleteCat('${c.id}')">🗑</button>
+    </div>`).join('')}</div>`;
+}
+function openForm(){ document.getElementById('formWrap').style.display='block'; }
+function closeForm(){ document.getElementById('formWrap').style.display='none'; editId=null; }
+function editCat(id,name,slug,emoji,order){ editId=id; document.getElementById('cName').value=name; document.getElementById('cSlug').value=slug; document.getElementById('cEmoji').value=emoji; document.getElementById('cOrder').value=order; openForm(); }
+async function saveCategory(){
+  const d={name:document.getElementById('cName').value.trim(),slug:document.getElementById('cSlug').value.trim(),emoji:document.getElementById('cEmoji').value,order:Number(document.getElementById('cOrder').value),active:true};
+  if(!d.name||!d.slug){showToast('Fill Name and Slug','error');return;}
+  if(editId) await sb().from('categories').update(d).eq('id',editId);
+  else await sb().from('categories').insert(d);
+  showToast('Saved!'); closeForm(); loadCats();
+}
+async function deleteCat(id){ if(!confirm('Delete?'))return; await sb().from('categories').delete().eq('id',id); loadCats(); }
+</script></body></html>

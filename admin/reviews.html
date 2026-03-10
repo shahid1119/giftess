@@ -1,0 +1,48 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Reviews – Admin</title><link rel="stylesheet" href="/css/admin.css"/><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/></head>
+<body><div class="admin-layout"><aside class="sidebar" id="sidebar"></aside><div class="main-area"><header class="topbar"><button class="menu-btn" onclick="toggleSidebar()">☰</button><span class="top-title">Reviews</span></header><div class="content">
+<div class="page-header"><h1 class="page-title">Reviews</h1><button class="btn-primary" onclick="toggleAddForm()">+ Manual Review</button></div>
+<div id="addForm" style="display:none;background:white;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 12px rgba(155,114,160,.08);">
+  <h3 style="font-family:'Playfair Display',serif;margin-bottom:16px;">Add Manual Review</h3>
+  <div class="form-grid2">
+    <div class="form-group"><label>Customer Name *</label><input id="rName" placeholder="Jane Doe"/></div>
+    <div class="form-group"><label>Rating</label><select id="rRating"><option value="5">5 ★</option><option value="4">4 ★</option><option value="3">3 ★</option><option value="2">2 ★</option><option value="1">1 ★</option></select></div>
+    <div class="form-group" style="grid-column:span 2"><label>Comment *</label><textarea id="rComment" rows="3"></textarea></div>
+  </div>
+  <div style="display:flex;gap:10px;"><button class="btn-primary" onclick="addManualReview()">Add Review</button><button class="btn-secondary" onclick="toggleAddForm()">Cancel</button></div>
+</div>
+<div id="reviewsList"><div class="spinner"></div></div>
+</div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/supabase-config.js"></script><script src="/admin/admin-common.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',async()=>{ renderSidebar('reviews'); await requireAdmin(); loadReviews(); });
+async function loadReviews(){
+  const{data}=await sb().from('reviews').select('*').order('created_at',{ascending:false});
+  const list=document.getElementById('reviewsList');
+  if(!data?.length){list.innerHTML='<div class="empty-admin"><div class="ei">⭐</div><h3>No reviews yet</h3></div>';return;}
+  list.innerHTML=`<div class="data-table">${data.map(r=>`
+    <div style="padding:18px 22px;border-bottom:1px solid #F5EEF8;display:flex;gap:16px;align-items:flex-start;">
+      <div style="flex:1">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <span style="color:#F5A623">${'★'.repeat(r.rating)}</span>
+          <span style="font-weight:600;font-size:14px">${r.user_name}</span>
+          <span class="badge ${r.approved?'badge-green':'badge-gold'}">${r.approved?'Approved':'Pending'}</span>
+        </div>
+        <p style="font-size:13px;color:#5C4A6E">${r.comment}</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        ${!r.approved?`<button class="btn-outline" onclick="approveReview('${r.id}')">✓ Approve</button>`:''}
+        <button class="btn-danger" onclick="deleteReview('${r.id}')">🗑</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+function toggleAddForm(){ const f=document.getElementById('addForm'); f.style.display=f.style.display==='none'?'block':'none'; }
+async function approveReview(id){ await sb().from('reviews').update({approved:true}).eq('id',id); showToast('Review approved'); loadReviews(); }
+async function deleteReview(id){ if(!confirm('Delete?'))return; await sb().from('reviews').delete().eq('id',id); loadReviews(); }
+async function addManualReview(){
+  const name=document.getElementById('rName').value.trim();
+  const comment=document.getElementById('rComment').value.trim();
+  if(!name||!comment){showToast('Fill all fields','error');return;}
+  await sb().from('reviews').insert({user_name:name,rating:Number(document.getElementById('rRating').value),comment,approved:true});
+  showToast('Review added!'); toggleAddForm(); loadReviews();
+}
+</script></body></html>
