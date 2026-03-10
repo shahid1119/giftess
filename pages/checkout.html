@@ -162,7 +162,22 @@ async function placeOrder() {
 
   saveCart([]);
   showToast('Order placed successfully! 🎉');
-  setTimeout(() => location.href = `/pages/order-detail.html?id=${data.id}`, 1000);
+  const items = orderData.items.map(i => `• ${i.name} x${i.qty} = ₹${(i.price*i.qty).toLocaleString()}`).join('\n');
+const msg = `🎁 *New Order from Giftess!*\n\n` +
+  `📋 Order ID: ${orderData.order_id}\n` +
+  `👤 Name: ${orderData.address.name}\n` +
+  `📱 Phone: ${orderData.address.phone}\n` +
+  `📍 Address: ${orderData.address.address}, ${orderData.address.city}, ${orderData.address.state} - ${orderData.address.pincode}\n\n` +
+  `🛍️ *Items:*\n${items}\n\n` +
+  `💰 Subtotal: ₹${orderData.subtotal.toLocaleString()}\n` +
+  `🚚 Shipping: ${orderData.shipping === 0 ? 'FREE' : '₹' + orderData.shipping}\n` +
+  `✅ *Total: ₹${orderData.total.toLocaleString()}*\n\n` +
+  `💳 Payment: ${orderData.payment_method.toUpperCase()}\n\n` +
+  `Please confirm my order and share payment details. 🙏`;
+
+const waUrl = `https://wa.me/916002698296?text=${encodeURIComponent(msg)}`;
+setTimeout(() => window.open(waUrl, '_blank'), 500);
+setTimeout(() => location.href = `/pages/order-detail.html?id=${data.id}`, 1000);
 }
 </script>
 </body>
