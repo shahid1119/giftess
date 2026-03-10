@@ -1,0 +1,34 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Hamper Discounts – Admin</title><link rel="stylesheet" href="/css/admin.css"/><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/></head>
+<body><div class="admin-layout"><aside class="sidebar" id="sidebar"></aside><div class="main-area"><header class="topbar"><button class="menu-btn" onclick="toggleSidebar()">☰</button><span class="top-title">Hamper Discounts</span></header><div class="content">
+<div class="page-header"><h1 class="page-title">Hamper Discounts</h1><button class="btn-primary" onclick="saveAll()">Save All Rules</button></div>
+<p style="color:#9B8AAD;font-size:14px;margin-bottom:20px">Configure discount rules based on number of items in a custom hamper.</p>
+<div id="rulesWrap"><div class="spinner"></div></div>
+</div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="/js/supabase-config.js"></script><script src="/admin/admin-common.js"></script>
+<script>
+let rules=[];
+const DEFAULTS=[{min_items:5,max_items:5,type:'flat',value:100},{min_items:6,max_items:6,type:'flat',value:140},{min_items:7,max_items:7,type:'percent',value:10},{min_items:8,max_items:99,type:'percent',value:15}];
+document.addEventListener('DOMContentLoaded',async()=>{
+  renderSidebar('discounts'); await requireAdmin();
+  const{data}=await sb().from('hamper_discounts').select('*').order('min_items');
+  rules=data?.length?data:DEFAULTS.map((r,i)=>({...r,id:'new_'+i}));
+  renderRules();
+});
+function renderRules(){
+  document.getElementById('rulesWrap').innerHTML=rules.map((r,i)=>`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;align-items:end;background:white;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 2px 10px rgba(155,114,160,.07)">
+      <div class="form-group" style="margin:0"><label>Min Items</label><input type="number" value="${r.min_items}" onchange="rules[${i}].min_items=Number(this.value)"/></div>
+      <div class="form-group" style="margin:0"><label>Max Items</label><input type="number" value="${r.max_items}" onchange="rules[${i}].max_items=Number(this.value)"/></div>
+      <div class="form-group" style="margin:0"><label>Type</label><select onchange="rules[${i}].type=this.value"><option value="flat" ${r.type==='flat'?'selected':''}>Flat (₹)</option><option value="percent" ${r.type==='percent'?'selected':''}>Percent (%)</option></select></div>
+      <div class="form-group" style="margin:0"><label>Value</label><input type="number" value="${r.value}" onchange="rules[${i}].value=Number(this.value)"/></div>
+    </div>`).join('');
+}
+async function saveAll(){
+  for(const r of rules){
+    const d={min_items:r.min_items,max_items:r.max_items,type:r.type,value:r.value};
+    if(r.id?.startsWith('new')) await sb().from('hamper_discounts').insert(d);
+    else await sb().from('hamper_discounts').update(d).eq('id',r.id);
+  }
+  showToast('Discount rules saved!');
+}
+</script></body></html>
