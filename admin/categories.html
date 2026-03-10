@@ -46,6 +46,10 @@ function editCat(id,name,slug,emoji,order){
   document.getElementById('cSlug').value=slug;
   document.getElementById('cEmoji').value=emoji;
   document.getElementById('cOrder').value=order;
+  if(emoji && emoji.startsWith('http')){
+    document.getElementById('cImgPreview').style.display='block';
+    document.getElementById('cImgPreviewEl').src=emoji;
+  }
   openForm();
 }
 async function saveCategory(){
