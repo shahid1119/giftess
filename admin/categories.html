@@ -40,7 +40,14 @@ async function loadCats(){
 }
 function openForm(){ document.getElementById('formWrap').style.display='block'; }
 function closeForm(){ document.getElementById('formWrap').style.display='none'; editId=null; }
-function editCat(id,name,slug,emoji,order){ editId=id; document.getElementById('cName').value=name; document.getElementById('cSlug').value=slug; document.getElementById('cEmoji').value=emoji; document.getElementById('cOrder').value=order; openForm(); }
+function editCat(id,name,slug,emoji,order){
+  editId=id;
+  document.getElementById('cName').value=name;
+  document.getElementById('cSlug').value=slug;
+  document.getElementById('cEmoji').value=emoji;
+  document.getElementById('cOrder').value=order;
+  openForm();
+}
 async function saveCategory(){
   const d={name:document.getElementById('cName').value.trim(),slug:document.getElementById('cSlug').value.trim(),emoji:document.getElementById('cEmoji').value,order:Number(document.getElementById('cOrder').value),active:true};
   if(!d.name||!d.slug){showToast('Fill Name and Slug','error');return;}
@@ -49,4 +56,20 @@ async function saveCategory(){
   showToast('Saved!'); closeForm(); loadCats();
 }
 async function deleteCat(id){ if(!confirm('Delete?'))return; await sb().from('categories').delete().eq('id',id); loadCats(); }
+
+  async function deleteCat(id){ if(!confirm('Delete?'))return; await sb().from('categories').delete().eq('id',id); loadCats(); }
+
+async function uploadCatImg(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('cImgStatus').textContent = '⏳ Uploading…';
+  const path = `categories/${Date.now()}_${file.name.replace(/\s/g,'_')}`;
+  const { error } = await sb().storage.from('product-images').upload(path, file);
+  if (error) { document.getElementById('cImgStatus').textContent = '❌ Upload failed'; return; }
+  const { data } = sb().storage.from('product-images').getPublicUrl(path);
+  document.getElementById('cEmoji').value = data.publicUrl;
+  document.getElementById('cImgStatus').textContent = '✅ Uploaded!';
+  document.getElementById('cImgPreview').style.display = 'block';
+  document.getElementById('cImgPreviewEl').src = data.publicUrl;
+}
 </script></body></html>
