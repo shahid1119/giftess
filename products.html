@@ -2,242 +2,144 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Products – Admin</title>
-  <link rel="stylesheet" href="/css/admin.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <title>Shop – Giftess</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+  <style>
+    .shop-layout { display:flex; gap:28px; padding:40px 5%; max-width:1300px; margin:0 auto; }
+    .sidebar { width:220px; flex-shrink:0; }
+    .filter-box { background:white; border-radius:16px; padding:20px; margin-bottom:16px; box-shadow:0 2px 12px rgba(155,114,160,.08); }
+    .filter-box h4 { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#9B72A0; margin-bottom:14px; }
+    .filter-btn { display:block; width:100%; background:none; border:1.5px solid #E8D5E8; border-radius:50px; padding:7px 14px; font-size:13px; font-weight:500; color:#5C4A6E; text-align:left; margin-bottom:6px; transition:all .2s; cursor:pointer; }
+    .filter-btn:hover,.filter-btn.active { background:#9B72A0; border-color:#9B72A0; color:white; }
+    .main-area { flex:1; min-width:0; }
+    .toolbar { display:flex; align-items:center; gap:12px; margin-bottom:28px; flex-wrap:wrap; }
+    .search-input { flex:1; min-width:180px; padding:10px 16px; border:1.5px solid #E8D5E8; border-radius:50px; font-size:14px; outline:none; font-family:'DM Sans',sans-serif; }
+    .search-input:focus { border-color:#C8A2C8; }
+    .sort-select { padding:10px 16px; border:1.5px solid #E8D5E8; border-radius:50px; font-size:13px; background:white; color:#5C4A6E; outline:none; font-family:'DM Sans',sans-serif; }
+    .count-badge { font-size:13px; color:#9B8AAD; white-space:nowrap; }
+    @media(max-width:768px){ .shop-layout{flex-direction:column;} .sidebar{width:100%;} .sidebar .filter-box{display:flex;gap:8px;flex-wrap:wrap;background:transparent;box-shadow:none;padding:0;margin:0;} .filter-box h4{display:none;} }
+  </style>
 </head>
 <body>
-<div class="admin-layout">
-  <aside class="sidebar" id="sidebar"></aside>
-  <div class="main-area">
-    <header class="topbar">
-      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-      <span class="top-title">Products</span>
-    </header>
-    <div class="content">
-      <div class="page-header">
-        <h1 class="page-title">Products</h1>
-        <button class="btn-primary" onclick="openNew()">+ Add Product</button>
-      </div>
-      <div class="toolbar">
-        <input class="search-input" id="searchInput" placeholder="Search by name or SKU…" oninput="renderTable()"/>
-        <span class="count-text" id="countText"></span>
-      </div>
-      <div id="tableWrap"><div class="spinner"></div></div>
+<div id="navbar"></div>
+
+<div class="page-hero">
+  <h1>Our Products</h1>
+  <p>Discover beautiful gift hampers for every occasion</p>
+</div>
+
+<div class="shop-layout">
+  <aside class="sidebar">
+    <div class="filter-box">
+      <h4>Category</h4>
+      <button class="filter-btn active" data-cat="all">All Products</button>
+      <button class="filter-btn" data-cat="birthday">Birthday</button>
+      <button class="filter-btn" data-cat="anniversary">Anniversary</button>
+      <button class="filter-btn" data-cat="valentine">Valentine</button>
+      <button class="filter-btn" data-cat="her">For Her</button>
+      <button class="filter-btn" data-cat="him">For Him</button>
+      <button class="filter-btn" data-cat="gourmet">Gourmet</button>
+      <button class="filter-btn" data-cat="selfcare">Self Care</button>
+      <button class="filter-btn" data-cat="unique">Unique</button>
     </div>
+    <div class="filter-box">
+      <h4>Price</h4>
+      <button class="filter-btn active" data-min="0" data-max="999999">All Prices</button>
+      <button class="filter-btn" data-min="0" data-max="999">Under ₹999</button>
+      <button class="filter-btn" data-min="1000" data-max="2000">₹1,000–₹2,000</button>
+      <button class="filter-btn" data-min="2000" data-max="5000">₹2,000–₹5,000</button>
+      <button class="filter-btn" data-min="5000" data-max="999999">₹5,000+</button>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <div class="toolbar">
+      <input class="search-input" id="searchInput" placeholder="Search products…" oninput="filterProducts()"/>
+      <select class="sort-select" id="sortSelect" onchange="filterProducts()">
+        <option value="">Default</option>
+        <option value="lowhigh">Price: Low → High</option>
+        <option value="highlow">Price: High → Low</option>
+        <option value="newest">Newest First</option>
+      </select>
+      <span class="count-badge" id="countBadge">Loading…</span>
+    </div>
+    <div class="products-grid" id="productsGrid"><div class="spinner"></div></div>
   </div>
 </div>
 
-<!-- Modal -->
-<div class="modal-overlay" id="modal" style="display:none;" onclick="e=>e.target===this&&closeModal()">
-  <div class="modal-box">
-    <div class="modal-head">
-      <h2 id="modalTitle">Add Product</h2>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid2">
-        <div class="form-group"><label>Product Name *</label><input id="fName" placeholder="Crunch Munch Hamper"/></div>
-        <div class="form-group"><label>SKU *</label>
-          <div style="display:flex;gap:8px;">
-            <input id="fSku" placeholder="GF34912" style="flex:1"/>
-            <button class="btn-outline" onclick="document.getElementById('fSku').value='GF'+Math.floor(10000+Math.random()*90000)">↻</button>
-          </div>
-        </div>
-        <div class="form-group"><label>Price (₹) *</label><input type="number" id="fPrice" placeholder="1299"/></div>
-        <div class="form-group"><label>Original Price (₹)</label><input type="number" id="fOrigPrice" placeholder="2399"/></div>
-        <div class="form-group"><label>Category *</label>
-          <select id="fCat">
-            <option value="birthday">Birthday</option><option value="anniversary">Anniversary</option>
-            <option value="valentine">Valentine</option><option value="her">For Her</option>
-            <option value="him">For Him</option><option value="gourmet">Gourmet</option>
-            <option value="selfcare">Self Care</option><option value="unique">Unique</option><option value="custom">Custom</option>
-          </select>
-        </div>
-        <div class="form-group"><label>Badge</label>
-          <select id="fBadge"><option value="">None</option><option value="New">New</option><option value="Sale">Sale</option><option value="Hot">Hot</option></select>
-        </div>
-        <div class="form-group"><label>Stock</label><input type="number" id="fStock" value="0"/></div>
-        <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:26px;">
-          <input type="checkbox" id="fActive" checked style="width:18px;height:18px;accent-color:#9B72A0"/>
-          <label for="fActive" style="font-size:14px;font-weight:600;color:#5C4A6E">Active (visible to customers)</label>
-        </div>
-      </div>
-      <div class="form-group"><label>Description</label><textarea id="fDesc" rows="3" placeholder="Describe the product…"></textarea></div>
-      <div class="form-group">
-        <label>Product Images</label>
-        <div class="img-upload-area" onclick="document.getElementById('imgFile').click()">
-          <span id="uploadLabel">📸 Click to upload images</span>
-        </div>
-        <input type="file" id="imgFile" multiple accept="image/*" style="display:none" onchange="handleImageUpload(event)"/>
-        <div class="img-previews" id="imgPreviews"></div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-        <button class="btn-primary" id="saveBtn" onclick="saveProduct()">Save Product</button>
-      </div>
-    </div>
-  </div>
-</div>
+<footer id="footer"></footer>
+<a href="https://wa.me/916002698296" class="wa-float" target="_blank">💬</a>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/supabase-config.js"></script>
-<script src="/admin/admin-common.js"></script>
+<script src="/js/footer.js"></script>
 <script>
 let allProducts = [];
-let editingId   = null;
-let imgUrls     = [];
+let activeCat = 'all';
+let activeMin = 0;
+let activeMax = 999999;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  renderSidebar('products');
-  await requireAdmin();
-  await loadProducts();
+  renderNavbar('products');
+  renderFooter();
+
+  // read URL params
+  const params = new URLSearchParams(location.search);
+  if (params.get('cat')) {
+    activeCat = params.get('cat');
+    document.querySelectorAll('[data-cat]').forEach(b => {
+      b.classList.toggle('active', b.dataset.cat === activeCat);
+    });
+  }
+  if (params.get('maxPrice')) activeMax = Number(params.get('maxPrice'));
+  if (params.get('minPrice')) activeMin = Number(params.get('minPrice'));
+
+  const { data } = await sb().from('products').select('*').eq('active', true).order('created_at', { ascending: false });
+  allProducts = data || [];
+  allProducts.forEach(p => { window._products[p.id] = p; });
+  filterProducts();
+
+  // category buttons
+  document.querySelectorAll('[data-cat]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeCat = btn.dataset.cat;
+      document.querySelectorAll('[data-cat]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterProducts();
+    });
+  });
+
+  // price buttons
+  document.querySelectorAll('[data-min]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeMin = Number(btn.dataset.min);
+      activeMax = Number(btn.dataset.max);
+      document.querySelectorAll('[data-min]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterProducts();
+    });
+  });
 });
 
-async function loadProducts() {
-  const { data } = await sb().from('products').select('*').order('created_at',{ascending:false});
-  allProducts = data || [];
-  renderTable();
-}
+function filterProducts() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const sort   = document.getElementById('sortSelect').value;
+  let filtered = allProducts
+    .filter(p => activeCat === 'all' || p.category === activeCat)
+    .filter(p => p.price >= activeMin && p.price <= activeMax)
+    .filter(p => p.name.toLowerCase().includes(search));
 
-function renderTable() {
-  const q = document.getElementById('searchInput').value.toLowerCase();
-  const filtered = allProducts.filter(p => p.name?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q));
-  document.getElementById('countText').textContent = filtered.length + ' products';
+  if (sort === 'lowhigh') filtered.sort((a,b) => a.price - b.price);
+  if (sort === 'highlow') filtered.sort((a,b) => b.price - a.price);
+
+  const grid = document.getElementById('productsGrid');
+  document.getElementById('countBadge').textContent = `${filtered.length} products`;
 
   if (!filtered.length) {
-    document.getElementById('tableWrap').innerHTML = `<div class="empty-admin"><div class="ei">🎁</div><h3>No products found</h3></div>`;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🎁</div><h3>No products found</h3><p>Try a different category or search term</p></div>`;
     return;
   }
-
-  document.getElementById('tableWrap').innerHTML = `
-    <div class="data-table">
-      <div class="table-head" style="grid-template-columns:56px 2fr 1fr 1fr .8fr 1fr 160px">
-        <span>Img</span><span>Name / SKU</span><span>Category</span><span>Price</span><span>Stock</span><span>Status</span><span>Actions</span>
-      </div>
-      ${filtered.map(p => `
-        <div class="table-row" style="grid-template-columns:56px 2fr 1fr 1fr .8fr 1fr 160px">
-          <span>
-            <div style="width:48px;height:48px;border-radius:10px;background:#F5EEF8;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:22px;">
-              ${p.images?.[0] ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover">` : '🎁'}
-            </div>
-          </span>
-          <span><div style="font-size:14px;font-weight:600;color:#2D1B3D;margin-bottom:2px;">${p.name}</div><div style="font-size:11px;color:#9B8AAD;">${p.sku}</div></span>
-          <span><span class="badge badge-purple">${p.category}</span></span>
-          <span><div style="font-weight:700;color:#9B72A0;">₹${Number(p.price).toLocaleString()}</div>${p.original_price?`<div style="font-size:12px;color:#9B8AAD;text-decoration:line-through;">₹${Number(p.original_price).toLocaleString()}</div>`:''}</span>
-          <span>${p.stock||0}</span>
-          <span><button class="badge ${p.active?'badge-green':'badge-red'}" onclick="toggleActive('${p.id}',${p.active})" style="border:none;cursor:pointer;">${p.active?'Active':'Inactive'}</button></span>
-          <span style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button class="btn-outline" onclick="openEdit('${p.id}')">✏️ Edit</button>
-            <button class="btn-danger" onclick="deleteProduct('${p.id}')">🗑</button>
-          </span>
-        </div>`).join('')}
-    </div>`;
-}
-
-function openNew() {
-  editingId = null; imgUrls = [];
-  document.getElementById('modalTitle').textContent = 'Add Product';
-  ['fName','fDesc','fPrice','fOrigPrice','fStock'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('fSku').value = 'GF' + Math.floor(10000 + Math.random() * 90000);
-  document.getElementById('fCat').value = 'birthday';
-  document.getElementById('fBadge').value = '';
-  document.getElementById('fActive').checked = true;
-  document.getElementById('imgPreviews').innerHTML = '';
-  document.getElementById('modal').style.display = 'flex';
-}
-
-function openEdit(id) {
-  const p = allProducts.find(x => x.id === id);
-  if (!p) return;
-  editingId = id;
-  imgUrls = p.images || [];
-  document.getElementById('modalTitle').textContent = 'Edit Product';
-  document.getElementById('fName').value = p.name || '';
-  document.getElementById('fSku').value  = p.sku || '';
-  document.getElementById('fPrice').value = p.price || '';
-  document.getElementById('fOrigPrice').value = p.original_price || '';
-  document.getElementById('fDesc').value  = p.description || '';
-  document.getElementById('fCat').value   = p.category || 'birthday';
-  document.getElementById('fBadge').value = p.badge || '';
-  document.getElementById('fStock').value = p.stock || 0;
-  document.getElementById('fActive').checked = p.active !== false;
-  renderImgPreviews();
-  document.getElementById('modal').style.display = 'flex';
-}
-
-function closeModal() { document.getElementById('modal').style.display = 'none'; }
-
-async function handleImageUpload(e) {
-  const files = Array.from(e.target.files);
-  document.getElementById('uploadLabel').textContent = '⏳ Uploading…';
-  for (const file of files) {
-    const path = `products/${Date.now()}_${file.name.replace(/\s/g,'_')}`;
-    const { error } = await sb().storage.from('product-images').upload(path, file);
-    if (!error) {
-      const { data } = sb().storage.from('product-images').getPublicUrl(path);
-      imgUrls.push(data.publicUrl);
-    }
-  }
-  document.getElementById('uploadLabel').textContent = '📸 Click to upload more images';
-  renderImgPreviews();
-  showToast(`${files.length} image(s) uploaded`);
-}
-
-function renderImgPreviews() {
-  document.getElementById('imgPreviews').innerHTML = imgUrls.map((url,i) => `
-    <div class="img-preview">
-      <img src="${url}" alt="">
-      <button class="rm" onclick="removeImg(${i})">✕</button>
-    </div>`).join('');
-}
-
-function removeImg(i) { imgUrls.splice(i,1); renderImgPreviews(); }
-
-async function saveProduct() {
-  const name = document.getElementById('fName').value.trim();
-  const sku  = document.getElementById('fSku').value.trim();
-  const price = Number(document.getElementById('fPrice').value);
-  if (!name || !sku || !price) { showToast('Please fill Name, SKU, and Price','error'); return; }
-
-  const btn = document.getElementById('saveBtn');
-  btn.textContent = 'Saving…'; btn.disabled = true;
-
-  const data = {
-    name, sku, price,
-    original_price: Number(document.getElementById('fOrigPrice').value) || null,
-    description: document.getElementById('fDesc').value,
-    category: document.getElementById('fCat').value,
-    badge: document.getElementById('fBadge').value,
-    stock: Number(document.getElementById('fStock').value)||0,
-    active: document.getElementById('fActive').checked,
-    images: imgUrls,
-  };
-
-  let error;
-  if (editingId) {
-    ({ error } = await sb().from('products').update(data).eq('id', editingId));
-  } else {
-    ({ error } = await sb().from('products').insert(data));
-  }
-
-  btn.textContent = 'Save Product'; btn.disabled = false;
-  if (error) { showToast('Error: '+error.message,'error'); return; }
-  showToast(editingId ? 'Product updated!' : 'Product added!');
-  closeModal();
-  loadProducts();
-}
-
-async function toggleActive(id, current) {
-  await sb().from('products').update({ active: !current }).eq('id', id);
-  loadProducts();
-}
-
-async function deleteProduct(id) {
-  if (!confirm('Delete this product?')) return;
-  await sb().from('products').delete().eq('id', id);
-  showToast('Product deleted');
-  loadProducts();
+  grid.innerHTML = filtered.map(p => productCardHTML(p)).join('');
 }
 </script>
 </body>

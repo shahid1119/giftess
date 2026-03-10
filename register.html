@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Register – Giftess</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+  <style>
+    .auth-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#F9F0FF,#EEE0F5); padding:20px; }
+    .auth-box  { background:white; border-radius:24px; padding:40px 36px; width:100%; max-width:440px; box-shadow:0 8px 40px rgba(155,114,160,.2); }
+    .auth-logo { font-size:22px; font-weight:700; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+    .auth-logo span { font-family:'Playfair Display',serif; color:#9B72A0; }
+    .auth-title { font-family:'Playfair Display',serif; font-size:1.8rem; color:#2D1B3D; margin-bottom:6px; }
+    .auth-sub   { font-size:14px; color:#9B8AAD; margin-bottom:24px; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
+    .auth-footer { font-size:13px; color:#9B8AAD; text-align:center; margin-top:20px; }
+    .auth-footer a { color:#9B72A0; font-weight:600; }
+  </style>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-box">
+    <div class="auth-logo">🎁 <span>giftess</span></div>
+    <h2 class="auth-title">Create Account</h2>
+    <p class="auth-sub">Join the Giftess family 💜</p>
+    <div class="grid2">
+      <div class="form-group"><label>Full Name *</label><input id="name" placeholder="Jane Doe"/></div>
+      <div class="form-group"><label>Phone</label><input id="phone" placeholder="+91 98765…"/></div>
+    </div>
+    <div class="form-group"><label>Email *</label><input type="email" id="email" placeholder="you@email.com"/></div>
+    <div class="form-group"><label>Password *</label><input type="password" id="password" placeholder="Min 6 characters"/></div>
+    <div class="form-group"><label>Confirm Password *</label><input type="password" id="confirm" placeholder="Repeat password"/></div>
+    <button class="btn-primary" style="width:100%;justify-content:center;" onclick="doRegister()" id="regBtn">Create Account</button>
+    <p class="auth-footer">Already have an account? <a href="/pages/login.html">Login</a></p>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase-config.js"></script>
+<script>
+async function doRegister() {
+  const name     = document.getElementById('name').value.trim();
+  const phone    = document.getElementById('phone').value.trim();
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const confirm  = document.getElementById('confirm').value;
+  if (!name || !email || !password) { showToast('Please fill required fields','error'); return; }
+  if (password !== confirm) { showToast('Passwords do not match','error'); return; }
+  if (password.length < 6)  { showToast('Password must be at least 6 characters','error'); return; }
+
+  const btn = document.getElementById('regBtn');
+  btn.textContent = 'Creating account…'; btn.disabled = true;
+
+  const { data, error } = await sb().auth.signUp({ email, password, options: { data: { name, phone } } });
+  if (error) {
+    showToast(error.message.includes('already') ? 'Email already registered' : error.message, 'error');
+    btn.textContent = 'Create Account'; btn.disabled = false;
+    return;
+  }
+
+  // Create profile row
+  if (data.user) {
+    await sb().from('profiles').upsert({ id: data.user.id, name, phone, email, role: 'customer' });
+  }
+
+  showToast('Account created! Welcome to Giftess 🎉');
+  setTimeout(() => location.href = '/index.html', 1000);
+}
+</script>
+</body>
+</html>
