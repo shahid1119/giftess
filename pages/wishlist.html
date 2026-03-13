@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Wishlist – Giftess</title>
+  <link rel="stylesheet" href="/css/global.css"/>
+</head>
+<body>
+<div id="navbar"></div>
+
+<div class="page-hero">
+  <h1>My Wishlist 💜</h1>
+  <p>Products you've saved for later</p>
+</div>
+
+<div class="page-wrap">
+  <div id="wishGrid" class="products-grid">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<footer id="footer"></footer>
+<a href="https://wa.me/916002698296" class="wa-float" target="_blank">💬</a>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/supabase-config.js"></script>
+<script src="/js/footer.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  renderNavbar('wishlist');
+  renderFooter();
+
+  const items = getWishlist();
+  const grid  = document.getElementById('wishGrid');
+
+  if (!items.length) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-icon">💜</div>
+        <h3>Your wishlist is empty</h3>
+        <p>Click the 🤍 heart on any product to save it here</p>
+        <a href="/pages/products.html" class="btn-primary">Browse Products</a>
+      </div>`;
+    return;
+  }
+
+  items.forEach(i => { window._products[i.id] = { ...i, images: [i.image] }; });
+  grid.innerHTML = items.map(i => productCardHTML({ ...i, images: [i.image] })).join('');
+});
+</script>
+</body>
+</html>
