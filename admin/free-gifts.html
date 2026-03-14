@@ -59,17 +59,38 @@ const d={name:document.getElementById('gName').value.trim(),sku:document.getElem
   showToast('Saved!'); closeForm(); load();
 }
   async function uploadGiftImg(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  document.getElementById('gImgStatus').textContent = '⏳ Uploading…';
-  const path = `freegifts/${Date.now()}_${file.name.replace(/\s/g,'_')}`;
-  const { error } = await sb().storage.from('product-images').upload(path, file);
-  if (error) { document.getElementById('gImgStatus').textContent = '❌ Failed'; return; }
-  const { data } = sb().storage.from('product-images').getPublicUrl(path);
-  document.getElementById('gImage').value = data.publicUrl;
-  document.getElementById('gImgStatus').textContent = '✅ Uploaded!';
-  document.getElementById('gImgPreview').style.display = 'block';
-  document.getElementById('gImgPreviewEl').src = data.publicUrl;
+  if (!e.target.files[0]) return;
+  await uploadToCloudinary(e.target.files[0], 'gImgStatus', 'gImage', 'gImgPreview', 'gImgPreviewEl');
 }
+```
+
+---
+
+## Step 9 — Test Upload
+
+1. Open `/admin/products.html`
+2. Click **Add Product**
+3. Click **Upload Image** → select any photo
+4. Watch for **✅ Uploaded!** message
+5. Go to [cloudinary.com/console](https://cloudinary.com/console) → **Media Library**
+6. You should see your image inside the `giftess/` folder ✅
+7. Save the product
+8. Open your website homepage — image shows on product card ✅
+
+---
+
+## How Images Flow
+```
+You upload in Admin Panel
+        ↓
+Image goes to Cloudinary
+        ↓
+Cloudinary URL saved in Supabase database
+        ↓
+Website loads image from Cloudinary
+        ↓
+Fast loading, unlimited storage ✅
+
+  
 async function del(id){ if(!confirm('Delete?'))return; await sb().from('free_gifts').delete().eq('id',id); load(); }
 </script></body></html>
