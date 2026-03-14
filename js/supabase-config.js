@@ -3,7 +3,8 @@
 // ============================================================
 const SUPABASE_URL  = 'https://zwflmmyakklmmhzpznce.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3ZmxtbXlha2tsbW1oenB6bmNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNjQxNjcsImV4cCI6MjA4ODc0MDE2N30.mUcKxQCSJ800DdiPRXoP9rPlcWzstPD0XHUjGQ7V3B4';
-
+const CLOUDINARY_CLOUD  = 'difkfekry';
+const CLOUDINARY_PRESET = 'giftess_upload';
 // Supabase client (loaded via CDN)
 let _sb = null;
 function sb() {
@@ -247,3 +248,31 @@ async function getHamperDiscount(count, subtotal) {
 document.addEventListener('DOMContentLoaded', () => {
   updateCartBadge();
 });
+// ── Cloudinary Upload ─────────────────────────────────────────
+async function uploadToCloudinary(file, statusElId, imageInputId, previewId, previewImgId) {
+  document.getElementById(statusElId).textContent = '⏳ Uploading…';
+  const form = new FormData();
+  form.append('file', file);
+  form.append('upload_preset', CLOUDINARY_PRESET);
+
+  try {
+    const res  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+      method: 'POST', body: form
+    });
+    const data = await res.json();
+
+    if (data.secure_url) {
+      document.getElementById(imageInputId).value      = data.secure_url;
+      document.getElementById(statusElId).textContent  = '✅ Uploaded!';
+      document.getElementById(previewId).style.display = 'block';
+      document.getElementById(previewImgId).src         = data.secure_url;
+      return data.secure_url;
+    } else {
+      document.getElementById(statusElId).textContent = '❌ Upload failed: ' + (data.error?.message || 'Unknown error');
+      return null;
+    }
+  } catch (err) {
+    document.getElementById(statusElId).textContent = '❌ Error: ' + err.message;
+    return null;
+  }
+}
