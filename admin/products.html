@@ -171,17 +171,26 @@ function closeModal() { document.getElementById('modal').style.display = 'none';
 async function handleImageUpload(e) {
   const files = Array.from(e.target.files);
   document.getElementById('uploadLabel').textContent = '⏳ Uploading…';
+
   for (const file of files) {
-    const path = `products/${Date.now()}_${file.name.replace(/\s/g,'_')}`;
-    const { error } = await sb().storage.from('product-images').upload(path, file);
-    if (!error) {
-      const { data } = sb().storage.from('product-images').getPublicUrl(path);
-      imgUrls.push(data.publicUrl);
+    const form = new FormData();
+    form.append('file', file);
+    form.append('upload_preset', CLOUDINARY_PRESET);
+
+    const res  = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+      method: 'POST', body: form
+    });
+    const data = await res.json();
+    if (data.secure_url) {
+      imgUrls.push(data.secure_url);
+    } else {
+      showToast('Upload failed: ' + (data.error?.message || 'Unknown'), 'error');
     }
   }
+
   document.getElementById('uploadLabel').textContent = '📸 Click to upload more images';
   renderImgPreviews();
-  showToast(`${files.length} image(s) uploaded`);
+  showToast(`${files.length} image(s) uploaded to Cloudinary ✅`);
 }
 
 function renderImgPreviews() {
