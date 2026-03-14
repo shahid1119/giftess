@@ -54,18 +54,9 @@ function closeForm(){ document.getElementById('formWrap').style.display='none'; 
   openForm();
 }
 
-  async function uploadExtraImg(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  document.getElementById('eImgStatus').textContent = '⏳ Uploading…';
-  const path = `extras/${Date.now()}_${file.name.replace(/\s/g,'_')}`;
-  const { error } = await sb().storage.from('product-images').upload(path, file);
-  if (error) { document.getElementById('eImgStatus').textContent = '❌ Failed'; return; }
-  const { data } = sb().storage.from('product-images').getPublicUrl(path);
-  document.getElementById('eImage').value = data.publicUrl;
-  document.getElementById('eImgStatus').textContent = '✅ Uploaded!';
-  document.getElementById('eImgPreview').style.display = 'block';
-  document.getElementById('eImgPreviewEl').src = data.publicUrl;
+  aasync function uploadExtraImg(e) {
+  if (!e.target.files[0]) return;
+  await uploadToCloudinary(e.target.files[0], 'eImgStatus', 'eImage', 'eImgPreview', 'eImgPreviewEl');
 }
 async function saveItem(){
   const d={name:document.getElementById('eName').value.trim(),image:document.getElementById('eImage').value.trim(),price:Number(document.getElementById('ePrice').value),active:true};
