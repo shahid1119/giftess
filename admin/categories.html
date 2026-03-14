@@ -66,16 +66,7 @@ async function deleteCat(id){ if(!confirm('Delete?'))return; await sb().from('ca
   async function deleteCat(id){ if(!confirm('Delete?'))return; await sb().from('categories').delete().eq('id',id); loadCats(); }
 
 async function uploadCatImg(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  document.getElementById('cImgStatus').textContent = '⏳ Uploading…';
-  const path = `categories/${Date.now()}_${file.name.replace(/\s/g,'_')}`;
-  const { error } = await sb().storage.from('product-images').upload(path, file);
-  if (error) { document.getElementById('cImgStatus').textContent = '❌ Upload failed'; return; }
-  const { data } = sb().storage.from('product-images').getPublicUrl(path);
-  document.getElementById('cEmoji').value = data.publicUrl;
-  document.getElementById('cImgStatus').textContent = '✅ Uploaded!';
-  document.getElementById('cImgPreview').style.display = 'block';
-  document.getElementById('cImgPreviewEl').src = data.publicUrl;
+  if (!e.target.files[0]) return;
+  await uploadToCloudinary(e.target.files[0], 'cImgStatus', 'cEmoji', 'cImgPreview', 'cImgPreviewEl');
 }
 </script></body></html>
